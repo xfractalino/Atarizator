@@ -8,13 +8,13 @@
 package com.fractalino.atarizator.emulate.atari;
 
 import com.fractalino.atarizator.emulate.Computer;
-import com.fractalino.atarizator.emulate.MOS6507;
+import com.fractalino.atarizator.emulate.MOS6502;
 
 /**
  *
  * @author fractalino
  */
-public class Atari2600 extends Computer<Atari2600Bus, MOS6507<Atari2600Bus>> {
+public class Atari2600 extends Computer<Atari2600Bus, MOS6502<Atari2600Bus>> {
     private int totalCycles = 0;
     
     public Atari2600() {
@@ -22,8 +22,7 @@ public class Atari2600 extends Computer<Atari2600Bus, MOS6507<Atari2600Bus>> {
     }
     
     private Atari2600(Atari2600Bus bus) {
-        super(
-                bus, new MOS6507<Atari2600Bus>(bus)
+        super(bus, new MOS6502<Atari2600Bus>(bus)
         );
     }
     

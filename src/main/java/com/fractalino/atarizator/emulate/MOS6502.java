@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * @author fractalino
  * @param <B>
  */
-public class MOS6507<B extends Bus> implements CPU{
+public class MOS6502<B extends Bus> implements CPU{
 
     private static final int CC = 0x100; // Carry check
 
@@ -50,7 +50,7 @@ public class MOS6507<B extends Bus> implements CPU{
 
     private final B bus;
 
-    public MOS6507(B bus) {
+    public MOS6502(B bus) {
         this.bus = bus;
     }
 
@@ -796,7 +796,7 @@ public class MOS6507<B extends Bus> implements CPU{
     private void NOP() {
     }
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOS6507.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MOS6502.class);
     
     /** 
      * This is an helper special instruction used to log CPU data in this 
