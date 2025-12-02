@@ -11,14 +11,13 @@ package com.fractalino.atarizator.emulate;
  *
  * @author fractalino
  */
-public interface Bus {
-    public int load(int addr);
-    public void store(int addr, int val);
-    public Memory.MemoryRecord[] enumMemory();
+public interface Device {
     
-    public default int loadWord(int addr) {
-        int l = load(addr);
-        int h = load(addr + 1);
-        return l | (h << 8);
+    public int read(int v);
+    public void write(int addr, int v);
+    public void tick();
+    
+    public default void tick(int cycles) { 
+        for(int i = 0; i < cycles; i++) tick();
     }
 }

@@ -37,6 +37,11 @@ public class MemoryTableModel extends AbstractTableModel{
     public int getColumnCount() {
         return cols + 1;
     }
+    
+    @Override
+    public String getColumnName(int col) {
+        return Integer.toHexString(col);
+    }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
@@ -44,7 +49,7 @@ public class MemoryTableModel extends AbstractTableModel{
             return String.format("%04x", rowIndex * cols);
         }
         
-        int value = mem.load(rowIndex * cols + columnIndex - 1);
+        int value = mem.read(rowIndex * cols + columnIndex - 1);
         
         switch(viewMode) {
             case OCT: return String.format("%04o", value);

@@ -31,7 +31,7 @@ public class Atari2600Bus implements Bus {
     
     public void setCartridge(byte[] romData) {
         for(int i = 0; i < romData.length && i < 4096; i++) {
-             this.cartridge.store(i, romData[i]);
+             this.cartridge.write(i, romData[i]);
         }
     }
 
@@ -42,7 +42,7 @@ public class Atari2600Bus implements Bus {
 
         // A12 = 1? It's the Cartridge ($1000 - $1FFF)
         if ((addr & 0x1000) != 0) {
-            return cartridge.load(addr & 0x0FFF);
+            return cartridge.read(addr & 0x0FFF);
         }
 
         // A12 = 0. It's system memory.
@@ -84,13 +84,6 @@ public class Atari2600Bus implements Bus {
 
         // RIOT RAM ($80 - $FF)
         riot.writeRAM(addr, val);
-    }
-    
-    @Override
-    public int loadWord(int addr) {
-        int l = load(addr);
-        int h = load(addr + 1);
-        return l | (h << 8);
     }
     
     public int loadWordZpBug(int addr) {

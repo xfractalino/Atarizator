@@ -18,11 +18,11 @@ public class Atari2600RIOT {
     
     public int readRAM(int addr) {
         // RAM is at $0080-$00FF.
-        return ram.load(addr & 0x7F);
+        return ram.read(addr & 0x7F);
     }
     
     public void writeRAM(int addr, int val) {
-        ram.store(addr & 0x7F, val);
+        ram.write(addr & 0x7F, val);
     }
     
     public int readIO(int addr) {

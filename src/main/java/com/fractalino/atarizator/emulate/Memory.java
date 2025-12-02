@@ -11,10 +11,8 @@ package com.fractalino.atarizator.emulate;
  *
  * @author fractalino
  */
-public interface Memory {
+public interface Memory extends Device {
     public int getCapacity();
-    public void store(int addr, int v);
-    public int load(int addr);
     
     public record MemoryRecord(
             Memory mem,

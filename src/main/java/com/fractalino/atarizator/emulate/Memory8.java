@@ -28,12 +28,13 @@ public class Memory8 implements Memory {
         mm = new byte[cap];
     }
     
-    public void store(int addr, int v) {
+    @Override
+    public void write(int addr, int v) {
         mm[addr % cap] = (byte) (v & 0xFF);
     }
     
     @Override
-    public int load(int addr) {
+    public int read(int addr) {
         return mm[addr % cap] & 0xFF;
     }
     
@@ -43,21 +44,24 @@ public class Memory8 implements Memory {
      * @param addr
      * @return 
      */
-    public int loadWordLE(int addr) {
-        int LL = load(addr);
-        int HH = load(addr + 1);
+    public int readWordLE(int addr) {
+        int LL = read(addr);
+        int HH = read(addr + 1);
         
         return LL + (HH << 8);
     }
     
-    public int loadWordZpBug(int addr) {
-        int LL = load(addr);
-        int HH = load((addr & 0xFF) == 0xFF ? 0x00 : addr + 1);
+    public int readWordZpBug(int addr) {
+        int LL = read(addr);
+        int HH = read((addr & 0xFF) == 0xFF ? 0x00 : addr + 1);
         
         return LL + (HH << 8);
     }
     
+    @Override
     public int getCapacity() {
         return cap;
     }
+
+    @Override public void tick() {}
 }
