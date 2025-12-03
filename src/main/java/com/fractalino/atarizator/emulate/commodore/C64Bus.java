@@ -1,6 +1,7 @@
 package com.fractalino.atarizator.emulate.commodore;
 
 import com.fractalino.atarizator.emulate.Bus;
+import com.fractalino.atarizator.emulate.MOS6502;
 import com.fractalino.atarizator.emulate.Memory;
 import com.fractalino.atarizator.emulate.Memory8;
 
@@ -17,6 +18,7 @@ public class C64Bus implements Bus {
     private final Memory8 kernalRom = new Memory8(8192);
     private final Memory8 charRom   = new Memory8(4096);
     
+    private final MOS6502 cpu;
     private final VIC2 vic  = new VIC2();
     private final SID  sid  = new SID();
     private final CIA  cia1 = new CIA();
@@ -24,7 +26,11 @@ public class C64Bus implements Bus {
     
     private int portDirection = 0xFF;
     private int portData = 0x27;
-
+    
+    C64Bus() {
+        cpu = new MOS6502(this);
+    }
+    
     @Override
     public int load(int addr) {
         if (addr >= 0xE000) {
@@ -99,6 +105,10 @@ public class C64Bus implements Bus {
     
         // low RAM ($0000 - $9FFF)
         dram.write(addr, val);
+    }
+    
+    public void nmi() {
+        cpu.nmi();
     }
 
     @Override

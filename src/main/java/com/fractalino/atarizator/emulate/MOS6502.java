@@ -326,9 +326,7 @@ public class MOS6502<B extends Bus> implements CPU{
             
             case 0xF2 -> LOG();
 
-            // <editor-fold defaultstate="collapsed" desc="JAM">
             case int t when t % 0x10 == 0x2 -> JAM();
-            // </editor-fold>
 
             default -> NOP();
         }
@@ -927,6 +925,10 @@ public class MOS6502<B extends Bus> implements CPU{
         sf(I, true);
 
         PC = bus.loadWord(0xFFFE);
+    }
+    
+    public void nmi() {
+        interrupt(false);
     }
     
     public void reset() {
