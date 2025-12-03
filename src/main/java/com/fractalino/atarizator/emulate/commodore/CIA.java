@@ -44,27 +44,84 @@ public class CIA implements Device {
     private final Memory8 registers = new Memory8(16);
     private final int[] outLatch = new int[2];
     
-    private final KeyboardMatrix kb = new KeyboardMatrix();
+    private final C64Bus bus;
+    private final KeyboardMatrix kb;
+    
+    CIA(C64Bus bus) {
+        this.bus = bus;
+        this.kb = new KeyboardMatrix(bus);
+    }
 
     @Override
     public int read(int addr) {
-        return switch(addr) {
-            case PRA -> { yield IntStream.range(0, 8)
-                    .map(i -> kb.readColumn(outLatch[PRA] & (1 << i)))
-                    .reduce(0, (a, b) -> a | b); }
-            case PRB -> { yield IntStream.range(0, 8)
-                    .map(i -> kb.readRow(outLatch[PRA] & (1 << i)))
-                    .reduce(0, (a, b) -> a | b); }
-            default ->  { yield registers.read(addr); }
-        };
+        switch (addr) {
+            case PRA -> {
+                int act = outLatch[PRB] | ~registers.read(DDRB);
+                int ddr = registers.read(DDRA);
+                int ext = 0xFF;
+                
+                for (int i = 0; i < 8; i++) {
+                    if ((act & (1 << i)) == 0) {
+                       ext &= kb.readColumn(i);
+                    }
+                }
+                
+                return (outLatch[PRA] & ddr) | (ext & ~ddr); 
+            }
+            
+            case PRB -> {
+                int act = outLatch[PRA] | ~registers.read(DDRA);
+                int ddr = registers.read(DDRB);
+                int ext = 0xFF;
+                
+                for (int i = 0; i < 8; i++) {
+                    if ((act & (1 << i)) == 0) {
+                       ext &= kb.readRow(i);
+                    }
+                }
+                
+                return (outLatch[PRB] & ddr) | (ext & ~ddr); 
+            }
+            
+            default -> {
+                return registers.read(addr);
+            }
+        }
     }
     
     @Override
     public void write(int addr, int v) {
-        registers.write(addr, v);
-        
-        if(addr == PRA || addr == PRB) 
-            outLatch[addr] = v;
+        v &= 0xFF; // Sanity check
+
+        switch(addr) {
+            case PRA: 
+            case PRB:
+                outLatch[addr] = v;
+
+                
+                // VIC bank switching? if (thisIsCIA2) bus.updateVICBank(v);
+                break;
+
+            case DDRA:
+            case DDRB:
+                registers.write(addr, v);
+                break;
+
+            case ICR: // $0D
+                boolean set = (v & 0x80) != 0;
+                int currentMask = registers.read(ICR);
+                if (set) currentMask |= (v & 0x7F);
+                else     currentMask &= ~(v & 0x7F);
+                
+                registers.write(ICR, currentMask);
+                
+                // checkInterrupts(); // TODO
+                break;
+
+            default:
+                registers.write(addr, v);
+                break;
+        }
     }
     
     @Override

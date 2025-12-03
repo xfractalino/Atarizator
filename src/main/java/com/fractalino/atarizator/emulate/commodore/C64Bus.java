@@ -21,14 +21,16 @@ public class C64Bus implements Bus {
     private final MOS6502 cpu;
     private final VIC2 vic  = new VIC2();
     private final SID  sid  = new SID();
-    private final CIA  cia1 = new CIA();
-    private final CIA  cia2 = new CIA();
+    private final CIA  cia1;
+    private final CIA  cia2;
     
     private int portDirection = 0xFF;
     private int portData = 0x27;
     
     C64Bus() {
-        cpu = new MOS6502(this);
+        cpu  = new MOS6502(this);
+        cia1 = new CIA(this);
+        cia2 = new CIA(this);
     }
     
     @Override
