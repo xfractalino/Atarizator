@@ -114,7 +114,7 @@ public class C64Bus implements Bus {
     }
     
     public void irq() {
-        
+        cpu.irq();
     }
 
     @Override

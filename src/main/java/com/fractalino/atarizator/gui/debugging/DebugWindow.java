@@ -9,8 +9,8 @@ package com.fractalino.atarizator.gui.debugging;
 
 import com.fractalino.atarizator.emulate.Computer;
 import com.fractalino.atarizator.emulate.Memory;
-import com.fractalino.atarizator.emulate.atari.Atari2600;
 import com.fractalino.atarizator.emulate.atari.test.Tests;
+import com.fractalino.atarizator.emulate.test.TestComputer;
 
 import java.awt.Component;
 
@@ -51,6 +51,10 @@ public class DebugWindow extends javax.swing.JFrame {
                 if(c instanceof MemoryViewPanel mvp) {
                     mvp.getMemoryTableModel().fireTableDataChanged();
                 }
+            }
+            
+            if(computer.getCPU().getProgramCounter() == 0x3469) {
+                System.out.println("success");
             }
         });
     }
@@ -223,7 +227,7 @@ public class DebugWindow extends javax.swing.JFrame {
     
     public static void init() {
         java.awt.EventQueue.invokeLater(() -> {
-            new DebugWindow(new Atari2600()).setVisible(true);
+            new DebugWindow(new TestComputer()).setVisible(true);
         });
     }
     

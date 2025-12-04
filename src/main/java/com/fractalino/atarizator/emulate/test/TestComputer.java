@@ -5,33 +5,38 @@
  *  It is subject to the terms of the GNU General Public License v3.
  *  For details, see the LICENSE file at the root of the project.
  */
-package com.fractalino.atarizator.emulate.commodore;
+package com.fractalino.atarizator.emulate.test;
 
 import com.fractalino.atarizator.emulate.Computer;
 import com.fractalino.atarizator.emulate.MOS6502;
+import com.fractalino.atarizator.emulate.Memory8;
 
 /**
  *
  * @author fractalino
  */
-public class C64 extends Computer<C64Bus, MOS6502<C64Bus>> {
-
-    public C64() {
-        this(new C64Bus());
+public class TestComputer extends Computer<TestBus, MOS6502<TestBus>> {
+    
+    public TestComputer() {
+        this(new TestBus());
     }
     
-    private C64(C64Bus bus) {
+    TestComputer(TestBus bus) {
         super(bus, new MOS6502<>(bus));
     }
-    
+
     @Override
     public void step() {
-        // TODO
+        cpu.step();
     }
 
     @Override
     public void loadROM(byte[] rom) {
-        // TODO
+        System.arraycopy(
+                rom, 0, 
+                ((Memory8) bus.enumMemory()[0].mem()).getMemory(), 0, 
+                65505
+        );
     }
     
 }

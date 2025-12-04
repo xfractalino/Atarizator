@@ -14,4 +14,6 @@ package com.fractalino.atarizator.emulate;
 public interface CPU {
     
     public int currentOpcode();
+    public int getProgramCounter();
+    
 }

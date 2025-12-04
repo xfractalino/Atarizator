@@ -64,8 +64,6 @@ public class MOS6502<B extends Bus> implements CPU{
         
         currentOpcode = next();
         exec(currentOpcode);
-        
-        System.out.println(this);
 
         int cost = CYCLES[currentOpcode];
 
@@ -948,13 +946,16 @@ public class MOS6502<B extends Bus> implements CPU{
         sf(D, false);
         // Load the Reset Vector (FFFC/FFFD)
         PC = bus.loadWord(0xFFFC);
-        
-        System.out.println(Integer.toHexString(PC));
     }
     
     @Override
     public int currentOpcode() {
         return currentOpcode;
+    }
+    
+    @Override 
+    public int getProgramCounter() {
+        return PC;
     }
     
     @Override

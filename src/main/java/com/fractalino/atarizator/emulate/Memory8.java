@@ -29,12 +29,12 @@ public class Memory8 extends Memory {
     }
     
     @Override
-    public void doWrite(int addr, int v) {
+    protected void doWrite(int addr, int v) {
         mm[addr & (cap-1)] = (byte) (v & 0xFF);
     }
     
     @Override
-    public int doRead(int addr) {
+    protected int doRead(int addr) {
         return mm[addr & (cap-1)] & 0xFF;
     }
     
@@ -61,6 +61,10 @@ public class Memory8 extends Memory {
     @Override
     public int getCapacity() {
         return cap;
+    }
+    
+    public byte[] getMemory() {
+        return mm;
     }
 
     @Override public void tick() {}
