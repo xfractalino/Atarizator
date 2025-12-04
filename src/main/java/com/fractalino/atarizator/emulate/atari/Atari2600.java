@@ -22,7 +22,7 @@ public class Atari2600 extends Computer<Atari2600Bus, MOS6502<Atari2600Bus>> {
     }
     
     private Atari2600(Atari2600Bus bus) {
-        super(bus, new MOS6502<Atari2600Bus>(bus)
+        super(bus, new MOS6502<>(bus)
         );
     }
     

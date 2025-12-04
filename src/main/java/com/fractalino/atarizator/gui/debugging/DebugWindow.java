@@ -11,6 +11,7 @@ import com.fractalino.atarizator.emulate.Computer;
 import com.fractalino.atarizator.emulate.Memory;
 import com.fractalino.atarizator.emulate.atari.Atari2600;
 import com.fractalino.atarizator.emulate.atari.test.Tests;
+
 import java.awt.Component;
 
 import java.io.File;
@@ -20,6 +21,7 @@ import java.nio.file.Files;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.Timer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +36,23 @@ public class DebugWindow extends javax.swing.JFrame {
 
     private Computer computer;
     
+    private final Timer runStepsTimer;
+    
     public DebugWindow(Computer computer) {
         this.computer = computer;
         
         initComponents();
         postInitComponents();
+        
+        runStepsTimer = new Timer(50, (e) -> {
+            step();
+
+            for(Component c : tabbedPane.getComponents()) {
+                if(c instanceof MemoryViewPanel mvp) {
+                    mvp.getMemoryTableModel().fireTableDataChanged();
+                }
+            }
+        });
     }
     
     private void resetTabs() {
@@ -85,6 +99,11 @@ public class DebugWindow extends javax.swing.JFrame {
         jPanel1.add(jButton1);
 
         jButton2.setText("Run Steps");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton2);
 
         jSpinner1.setValue(3);
@@ -183,6 +202,11 @@ public class DebugWindow extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        if(runStepsTimer.isRunning()) runStepsTimer.stop();
+        else runStepsTimer.start();
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     private void step() {
         computer.step();
