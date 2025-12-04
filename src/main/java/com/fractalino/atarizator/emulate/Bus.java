@@ -14,7 +14,24 @@ package com.fractalino.atarizator.emulate;
 public interface Bus {
     public int load(int addr);
     public void store(int addr, int val);
+    
     public Memory.MemoryRecord[] enumMemory();
+    
+    public default void registerMemoryWriteListener(MemoryWriteListener[] listeners) {
+        var recs = enumMemory();
+        
+        if(listeners.length != recs.length) {
+            throw new IllegalArgumentException("Can only register the same "
+                    + "number of listeners as the number of memories.");
+        }
+        
+        for(int i = 0; i < recs.length; i++) {
+            var rec = recs[i];
+            var lst = listeners[i];
+            
+            rec.mem().registerMemoryWriteListener(lst);
+        }
+    }
     
     public default int loadWord(int addr) {
         int l = load(addr);

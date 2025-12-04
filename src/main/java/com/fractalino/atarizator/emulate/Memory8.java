@@ -11,7 +11,7 @@ package com.fractalino.atarizator.emulate;
  *
  * @author fractalino
  */
-public class Memory8 implements Memory {
+public class Memory8 extends Memory {
     
     private final int cap;
     private final int reg;
@@ -29,13 +29,13 @@ public class Memory8 implements Memory {
     }
     
     @Override
-    public void write(int addr, int v) {
-        mm[addr % cap] = (byte) (v & 0xFF);
+    public void doWrite(int addr, int v) {
+        mm[addr & (cap-1)] = (byte) (v & 0xFF);
     }
     
     @Override
-    public int read(int addr) {
-        return mm[addr % cap] & 0xFF;
+    public int doRead(int addr) {
+        return mm[addr & (cap-1)] & 0xFF;
     }
     
     /**

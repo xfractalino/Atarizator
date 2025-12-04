@@ -9,9 +9,6 @@ package com.fractalino.atarizator.emulate.commodore;
 
 import com.fractalino.atarizator.emulate.Device;
 import com.fractalino.atarizator.emulate.Memory8;
-import com.fractalino.atarizator.gui.KeyboardAdapter;
-
-import java.util.stream.IntStream;
 
 /**
  *
@@ -47,46 +44,57 @@ public class CIA implements Device {
     private final C64Bus bus;
     private final KeyboardMatrix kb;
     
-    CIA(C64Bus bus) {
+    private final CIAID id;
+    
+    CIA(C64Bus bus, CIAID id) {
         this.bus = bus;
-        this.kb = new KeyboardMatrix(bus);
+        this.id  = id;
+        this.kb  = new KeyboardMatrix(bus);
     }
 
     @Override
     public int read(int addr) {
         switch (addr) {
             case PRA -> {
-                int act = outLatch[PRB] | ~registers.read(DDRB);
-                int ddr = registers.read(DDRA);
-                int ext = 0xFF;
-                
-                for (int i = 0; i < 8; i++) {
-                    if ((act & (1 << i)) == 0) {
-                       ext &= kb.readColumn(i);
+                if(id == CIAID.CIA1) {
+                    int act = outLatch[PRB] | ~registers.read(DDRB);
+                    int ddr = registers.read(DDRA);
+                    int ext = 0xFF;
+
+                    for (int i = 0; i < 8; i++) {
+                        if ((act & (1 << i)) == 0) {
+                           ext &= kb.readColumn(i);
+                        }
                     }
+
+                    return (outLatch[PRA] & ddr) | (ext & ~ddr); 
                 }
                 
-                return (outLatch[PRA] & ddr) | (ext & ~ddr); 
+                
             }
             
             case PRB -> {
-                int act = outLatch[PRA] | ~registers.read(DDRA);
-                int ddr = registers.read(DDRB);
-                int ext = 0xFF;
-                
-                for (int i = 0; i < 8; i++) {
-                    if ((act & (1 << i)) == 0) {
-                       ext &= kb.readRow(i);
+                if(id == CIAID.CIA1) {
+                    int act = outLatch[PRA] | ~registers.read(DDRA);
+                    int ddr = registers.read(DDRB);
+                    int ext = 0xFF;
+
+                    for (int i = 0; i < 8; i++) {
+                        if ((act & (1 << i)) == 0) {
+                           ext &= kb.readRow(i);
+                        }
                     }
+
+                    return (outLatch[PRB] & ddr) | (ext & ~ddr);
                 }
-                
-                return (outLatch[PRB] & ddr) | (ext & ~ddr); 
             }
             
             default -> {
                 return registers.read(addr);
             }
         }
+        
+        return 0xFF;
     }
     
     @Override
@@ -128,4 +136,10 @@ public class CIA implements Device {
     public void tick() {
         
     }
+    
+    Memory8 getRegisters() {
+        return registers;
+    }
+    
+    enum CIAID { CIA1, CIA2 }
 }

@@ -29,8 +29,8 @@ public class C64Bus implements Bus {
     
     C64Bus() {
         cpu  = new MOS6502(this);
-        cia1 = new CIA(this);
-        cia2 = new CIA(this);
+        cia1 = new CIA(this, CIA.CIAID.CIA1);
+        cia2 = new CIA(this, CIA.CIAID.CIA2);
     }
     
     @Override
@@ -121,7 +121,10 @@ public class C64Bus implements Bus {
             new Memory.MemoryRecord(basicRom,  "Char ROM"),
             
             new Memory.MemoryRecord(dram, "Dynamic RAM"),
-            new Memory.MemoryRecord(cram, "Color RAM")
+            new Memory.MemoryRecord(cram, "Color RAM"),
+            
+            new Memory.MemoryRecord(cia1.getRegisters(), "CIA 1"),
+            new Memory.MemoryRecord(cia2.getRegisters(), "CIA 2")
         };
     }
     
