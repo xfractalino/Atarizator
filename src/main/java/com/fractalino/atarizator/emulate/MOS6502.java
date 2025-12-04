@@ -16,6 +16,9 @@ import org.slf4j.LoggerFactory;
  * @param <B>
  */
 public class MOS6502<B extends Bus> implements CPU{
+    
+    private static final int VEC_NMI = 0xFFFA;
+    private static final int VEC_IRQ = 0xFFFE;
 
     private static final int CC = 0x100; // Carry check
 
@@ -333,13 +336,13 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void LSR(int addr) {
-        int M = bus.load(addr);
+        int M = bus.read(addr);
         int lsb = M & 0x1;
         M >>>= 1;
         M &= 0xFF;
         uaf(M);
         sf(C, lsb == 0x1);
-        bus.store(addr, M);
+        bus.write(addr, M);
     }
 
     private void LSR_A() {
@@ -351,12 +354,12 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void ROL(int addr) {
-        int M = bus.load(addr);
+        int M = bus.read(addr);
         M <<= 1;
         M |= S & C;
         uaf(M);
         sf(C, (M & CC) == CC);
-        bus.store(addr, M);
+        bus.write(addr, M);
     }
 
     private void ROL_A() {
@@ -367,13 +370,13 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void ROR(int addr) {
-        int M = bus.load(addr);
+        int M = bus.read(addr);
         int lsb = M & 0x1;
         M >>>= 1;
         M |= (S & C) << 7;
         uaf(M);
         sf(C, lsb == 1);
-        bus.store(addr, M);
+        bus.write(addr, M);
     }
 
     private void ROR_A() {
@@ -385,22 +388,22 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void BIT(int addr) {
-        final int M = bus.load(addr);
+        final int M = bus.read(addr);
         sf(N, (M & 0x80) == 0x80);
         sf(V, (M & 0x40) == 0x40);
         sf(Z, (A & M) == 0x0);
     }
 
     private void STA(int addr) {
-        bus.store(addr, A);
+        bus.write(addr, A);
     }
 
     private void STX(int addr) {
-        bus.store(addr, X);
+        bus.write(addr, X);
     }
 
     private void STY(int addr) {
-        bus.store(addr, Y);
+        bus.write(addr, Y);
     }
 
     private void TXS() {
@@ -441,9 +444,9 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void DEC(int addr) {
-        int v = bus.load(addr) - 1;
+        int v = bus.read(addr) - 1;
         uaf(v);
-        bus.store(addr, v);
+        bus.write(addr, v);
     }
 
     private void INY() {
@@ -455,29 +458,33 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void INC(int addr) {
-        int v = bus.load(addr) + 1;
+        int v = bus.read(addr) + 1;
         uaf(v);
         v &= 0xFF;
-        bus.store(addr, v);
+        bus.write(addr, v);
     }
 
     private void LDY(int addr) {
-        Y = bus.load(addr);
+        Y = bus.read(addr);
         uaf(Y);
     }
 
     private void LDX(int addr) {
-        X = bus.load(addr);
+        X = bus.read(addr);
         uaf(X);
     }
 
     private void LDA(int addr) {
-        A = bus.load(addr);
+        A = bus.read(addr);
         uaf(A);
     }
 
     private void JSR(int addr) {
-        spush(PC + 2);
+        int raddr = PC + 2;
+        
+        spush((raddr >> 8) & 0xFF);
+        spush(raddr & 0xFF);
+        
         JMP(addr);
     }
 
@@ -486,14 +493,16 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void RTS() {
-        int SPC = spull();
-        PC = SPC + 1;
+        int low = spull();
+        int high = spull();
+
+        int returnAddr = (high << 8) | low;
+
+        PC = returnAddr + 1;
     }
 
     private void BRK() {
-        PC += 2;
-
-        interrupt(true);
+        interrupt(true, VEC_IRQ);
     }
 
     private void RTI() {
@@ -509,59 +518,35 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void BVC(int r) {
-        if ((S & V) == V)
-            return;
-
-        JMP(rel(r));
+        branch((S & V) == V, rel(r));
     }
 
     private void BVS(int r) {
-        if ((S & V) == 0x0)
-            return;
-
-        JMP(rel(r));
+        branch((S & V) == 0x0, rel(r));
     }
 
     private void BMI(int r) {
-        if ((S & N) == 0x0)
-            return;
-
-        JMP(rel(r));
+        branch((S & N) == 0x0, rel(r));
     }
 
     private void BNE(int r) {
-        if ((S & Z) == Z)
-            return;
-
-        JMP(rel(r));
+        branch((S & Z) == Z, rel(r));
     }
 
     private void BPL(int r) {
-        if ((S & N) == N)
-            return;
-
-        JMP(rel(r));
+        branch((S & N) == N, rel(r));
     }
 
     private void BEQ(int r) {
-        if ((S & Z) == 0x0)
-            return;
-
-        JMP(rel(r));
+        branch((S & Z) == 0x0, rel(r));
     }
 
     private void BCC(int r) {
-        if ((S & C) == C)
-            return;
-
-        JMP(rel(r));
+        branch((S & C) == C, rel(r));
     }
 
     private void BCS(int r) {
-        if ((S & C) == 0x0)
-            return;
-
-        JMP(rel(r));
+        branch((S & C) == 0x0, rel(r));
     }
 
     private void CLC() {
@@ -593,19 +578,19 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void CPY(int addr) {
-        int cmp = Y - bus.load(addr);
+        int cmp = Y - bus.read(addr);
         uaf(cmp);
         sf(C, (cmp & CC) == CC);
     }
 
     private void CPX(int addr) {
-        int cmp = X - bus.load(addr);
+        int cmp = X - bus.read(addr);
         uaf(cmp);
         sf(C, (cmp & CC) == CC);
     }
 
     private void CMP(int addr) {
-        int cmp = A - bus.load(addr);
+        int cmp = A - bus.read(addr);
         uaf(cmp);
         sf(C, (cmp & CC) == CC);
     }
@@ -627,29 +612,29 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void ORA(int addr) {
-        final int M = bus.load(addr);
+        final int M = bus.read(addr);
         A |= M;
         uaf(A);
     }
 
     private void AND(int addr) {
-        final int M = bus.load(addr);
+        final int M = bus.read(addr);
         A &= M;
         uaf(A);
     }
 
     private void EOR(int addr) {
-        final int M = bus.load(addr);
+        final int M = bus.read(addr);
         A ^= M;
         uaf(A);
     }
 
     private void ASL(int addr) {
-        int M = bus.load(addr);
+        int M = bus.read(addr);
         M <<= 1;
         uaf(M);
         sf(C, M > 0xFF);
-        bus.store(addr, M);
+        bus.write(addr, M);
     }
 
     private void ASL_A() {
@@ -659,7 +644,7 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void ADC(int addr) {
-        int M = bus.load(addr);
+        int M = bus.read(addr);
 
         int c_in = (S & C);
         int binSum = A + M + c_in;
@@ -686,7 +671,7 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void SBC(int addr) {
-        int M = bus.load(addr);
+        int M = bus.read(addr);
         int c_in = (S & C);
 
         int binDiff = A - M - (1 - c_in);
@@ -736,11 +721,11 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void SAX(int addr) {
-        bus.store(addr, A & X);
+        bus.write(addr, A & X);
     }
 
     private void LAX(int addr) {
-        int value = bus.load(addr);
+        int value = bus.read(addr);
         A = value;
         X = value;
         uaf(A);
@@ -767,7 +752,7 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void ARR() {
-        int M = bus.load(imm());
+        int M = bus.read(imm());
         A &= M;
         // ROR A
         int oldC = (S & C);
@@ -780,7 +765,7 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private void AXS() {
-        int M = bus.load(imm());
+        int M = bus.read(imm());
         int diff = (A & X) - M;
         sf(C, diff >= 0);
         X = diff & 0xFF;
@@ -813,15 +798,15 @@ public class MOS6502<B extends Bus> implements CPU{
     private int xind(int ptr) {
         int zp = (ptr + X) & 0xFF;
         
-        int low = bus.load(zp);
-        int high = bus.load((zp + 1) & 0xFF);
+        int low = bus.read(zp);
+        int high = bus.read((zp + 1) & 0xFF);
         
         return low | (high << 8);
     }
 
     private int indy(int addr) {
-        int low = bus.load(addr);
-        int high = bus.load((addr + 1) & 0xFF);
+        int low = bus.read(addr);
+        int high = bus.read((addr + 1) & 0xFF);
         int base = low | (high << 8);
         int effective = (base + Y) & 0xFFFF;
         
@@ -887,11 +872,11 @@ public class MOS6502<B extends Bus> implements CPU{
     }
 
     private int next() {
-        return bus.load(PC++);
+        return bus.read(PC++);
     }
 
     private void spush(int b) {
-        bus.store(0x100 + P, b);
+        bus.write(0x100 + P, b);
 
         P = (P - 1) & 0xFF;
     }
@@ -899,36 +884,62 @@ public class MOS6502<B extends Bus> implements CPU{
     private int spull() {
         P = (P + 1) & 0xFF;
 
-        return bus.load(0x100 + P);
+        return bus.read(0x100 + P);
     }
 
     private int jmpPageWrapBug(int addr) {
         final int target_lsb = addr;
         // trigger the MOS6502 JMP bug if conditions are met
-        final int target_msb = ((addr & 0xFF) == 0xFF) ? (addr & 0xFF00) | ((addr) & 0xFF) : (addr + 1);
+        final int target_msb = ((addr & 0xFF) == 0xFF)
+                ? (addr & 0xFF00) 
+                : (addr + 1);
 
-        return (bus.load(target_msb) << 8) |
-                bus.load(target_lsb);
+        return (bus.read(target_msb) << 8) |
+                bus.read(target_lsb);
+    }
+    
+    private void branch(boolean nc, int offset) {
+        if (nc) return;
+
+        penalty++;
+
+        int target = (PC + (byte)offset) & 0xFFFF;
+
+        // page cross
+        if ((PC & 0xFF00) != (target & 0xFF00)) {
+            penalty++;
+        }
+
+        PC = target;
     }
 
-    private void interrupt(boolean isSoftwareBreak) {
+    private void interrupt(boolean isSoftwareBreak, int vectorAddress) {
+        if (isSoftwareBreak) {
+            PC++; 
+        }
+
         spush((PC >> 8) & 0xFF);
         spush(PC & 0xFF);
 
         int statusToPush = S | 0x20;
         if (isSoftwareBreak) {
-            statusToPush |= B;
+            statusToPush |= 0x10; // The B flag
         }
         spush(statusToPush);
 
-        // Disable further interrupts
         sf(I, true);
 
-        PC = bus.loadWord(0xFFFE);
+        PC = bus.loadWord(vectorAddress);
     }
-    
+
     public void nmi() {
-        interrupt(false);
+        interrupt(false, VEC_NMI);
+    }
+
+    public void irq() {
+        if ((S & I) == 0) {
+            interrupt(false, VEC_IRQ);
+        }
     }
     
     public void reset() {

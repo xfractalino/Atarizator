@@ -12,8 +12,8 @@ package com.fractalino.atarizator.emulate;
  * @author fractalino
  */
 public interface Bus {
-    public int load(int addr);
-    public void store(int addr, int val);
+    public int read(int addr);
+    public void write(int addr, int val);
     
     public Memory.MemoryRecord[] enumMemory();
     
@@ -34,8 +34,8 @@ public interface Bus {
     }
     
     public default int loadWord(int addr) {
-        int l = load(addr);
-        int h = load(addr + 1);
+        int l = read(addr);
+        int h = read(addr + 1);
         return l | (h << 8);
     }
 }

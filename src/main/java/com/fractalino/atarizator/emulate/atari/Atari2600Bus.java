@@ -36,7 +36,7 @@ public class Atari2600Bus implements Bus {
     }
 
     @Override
-    public int load(int addr) {
+    public int read(int addr) {
         // The 6507 only has 13 address lines (A0-A12). Handle this:
         addr &= 0x1FFF;
 
@@ -62,7 +62,7 @@ public class Atari2600Bus implements Bus {
     }
 
     @Override
-    public void store(int addr, int val) {
+    public void write(int addr, int val) {
         addr &= 0x1FFF;
 
         // ROM Write? Illegal.
@@ -87,8 +87,8 @@ public class Atari2600Bus implements Bus {
     }
     
     public int loadWordZpBug(int addr) {
-        int l = load(addr);
-        int h = load((addr & 0xFF) == 0xFF ? (addr & 0xFF00) : addr + 1);
+        int l = read(addr);
+        int h = read((addr & 0xFF) == 0xFF ? (addr & 0xFF00) : addr + 1);
         
         return l | (h << 8);
     }

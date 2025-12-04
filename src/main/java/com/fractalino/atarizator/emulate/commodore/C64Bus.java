@@ -34,7 +34,7 @@ public class C64Bus implements Bus {
     }
     
     @Override
-    public int load(int addr) {
+    public int read(int addr) {
         if (addr >= 0xE000) {
             if ((portData & 0x02) == 0x02) {
                 // if KERNAL is hidden by RAM, read RAM.
@@ -72,7 +72,7 @@ public class C64Bus implements Bus {
     }
 
     @Override
-    public void store(int addr, int val) {
+    public void write(int addr, int val) {
         if (addr >= 0xE000) {
             if ((portData & 0x02) == 0x02) {
                 // if KERNAL is hidden by RAM, read RAM.
@@ -111,6 +111,10 @@ public class C64Bus implements Bus {
     
     public void nmi() {
         cpu.nmi();
+    }
+    
+    public void irq() {
+        
     }
 
     @Override

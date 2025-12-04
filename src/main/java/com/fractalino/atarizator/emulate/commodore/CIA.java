@@ -56,6 +56,7 @@ public class CIA implements Device {
     public int read(int addr) {
         switch (addr) {
             case PRA -> {
+                // CIA1 PRA
                 if(id == CIAID.CIA1) {
                     int act = outLatch[PRB] | ~registers.read(DDRB);
                     int ddr = registers.read(DDRA);
@@ -70,10 +71,12 @@ public class CIA implements Device {
                     return (outLatch[PRA] & ddr) | (ext & ~ddr); 
                 }
                 
-                
+                //CIA2 PRA
+                return registers.read(addr);
             }
             
             case PRB -> {
+                // CIA1 PRB
                 if(id == CIAID.CIA1) {
                     int act = outLatch[PRA] | ~registers.read(DDRA);
                     int ddr = registers.read(DDRB);
@@ -87,6 +90,9 @@ public class CIA implements Device {
 
                     return (outLatch[PRB] & ddr) | (ext & ~ddr);
                 }
+                
+                // CIA2 PRB
+                registers.read(addr);
             }
             
             default -> {
@@ -102,20 +108,18 @@ public class CIA implements Device {
         v &= 0xFF; // Sanity check
 
         switch(addr) {
-            case PRA: 
-            case PRB:
+            case PRA, PRB -> {
                 outLatch[addr] = v;
-
+                
                 
                 // VIC bank switching? if (thisIsCIA2) bus.updateVICBank(v);
-                break;
-
-            case DDRA:
-            case DDRB:
+            }
+            case DDRA, DDRB -> {
                 registers.write(addr, v);
-                break;
+            }
 
-            case ICR: // $0D
+            case ICR -> {
+                // $0D
                 boolean set = (v & 0x80) != 0;
                 int currentMask = registers.read(ICR);
                 if (set) currentMask |= (v & 0x7F);
@@ -124,11 +128,9 @@ public class CIA implements Device {
                 registers.write(ICR, currentMask);
                 
                 // checkInterrupts(); // TODO
-                break;
-
-            default:
-                registers.write(addr, v);
-                break;
+            }
+            
+            default -> registers.write(addr, v);
         }
     }
     
